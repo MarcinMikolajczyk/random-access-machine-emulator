@@ -25,6 +25,7 @@ class Vm {
     private byte bytecode[] = new byte[0x1000];
     private boolean exit_now = false;
     private int instruction_pointer = 0;
+    private boolean jump = false;
 
     public Vm(File bytecode_file) throws IOException {
         FileInputStream fileInputStream = new FileInputStream(bytecode_file);
@@ -35,7 +36,11 @@ class Vm {
     public void run(){
 
         while(!exit_now && instruction_pointer < 0x1000){
-            instruction_pointer ++;
+
+            if(!jump)
+                instruction_pointer ++;
+            else
+                jump = false;
 
             switch (bytecode[instruction_pointer - 1]){
                 case 0x00: Z(); break;
@@ -43,6 +48,7 @@ class Vm {
                 case 0x10: T(); break;
                 case 0x20: I(); break;
                 case 0x6f: IN(); break;
+                case 0x5f: OUT(); break;
                 case 0x7f: EXIT(); break;
             }
         }
@@ -62,7 +68,13 @@ class Vm {
         register[bytecode[instruction_pointer]] = scanner.nextInt();
         instruction_pointer++;
     }
-
+    /*
+    * Println method
+    * */
+    private void OUT(){
+        System.out.println(register[bytecode[instruction_pointer]]);
+        instruction_pointer++;
+    }
     /*
     * Z(n) => z[n] = 0 ; resetting the registry
     */
@@ -91,9 +103,12 @@ class Vm {
     * I(m, n, q) => if z[m] == z[n] then go to q
     * */
     private void I(){
-        if(register[bytecode[instruction_pointer]] == register[bytecode[instruction_pointer + 1]])
-            instruction_pointer = bytecode[instruction_pointer+2];
+        if(register[bytecode[instruction_pointer]] == register[bytecode[instruction_pointer + 1]]) {
+            instruction_pointer += bytecode[instruction_pointer + 2];
+            jump = true;
+        }
         else
             instruction_pointer+=3;
     }
+
 }
